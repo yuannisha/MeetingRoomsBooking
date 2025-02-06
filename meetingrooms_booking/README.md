@@ -302,8 +302,8 @@ WHERE r.name = 'ROLE_USER'
 AND p.name IN ('ROOM_READ', 'BOOKING_CREATE', 'BOOKING_READ', 'BOOKING_UPDATE', 'BOOKING_DELETE');
 
 -- 创建管理员用户（密码：admin123）
-INSERT INTO users (phone, password, name, email, status)
-VALUES ('13800138000', '$2a$10$rTxFfhJVrwHq6CSJ3LXfAOYz.DDxG7/mZhD8fF8EYhCmG6.P9Udji', '管理员', 'admin@example.com', 1);
+INSERT INTO users (phone, password,username, status)
+VALUES ('13800138000', '0192023a7bbd73250516f069df18b500', '管理员', 1);
 
 -- 为管理员分配角色
 INSERT INTO user_roles (user_id, role_id)
