@@ -311,4 +311,4 @@ SELECT u.id, r.id
 FROM users u
 CROSS JOIN roles r
 WHERE u.phone = '13800138000'
-AND r.name = 'ROLE_ADMIN'; 
+AND r.name = 'ROLE_ADMIN';  
