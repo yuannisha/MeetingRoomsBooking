@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.meeting.booking.dao.BookingMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.meeting.booking.model.Booking">
+        <id column="id" property="id" />
+        <result column="room_id" property="roomId" />
+        <result column="user_id" property="userId" />
+        <result column="date" property="date" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="title" property="title" />
+        <result column="attendees" property="attendees" />
+        <result column="description" property="description" />
+        <result column="status" property="status" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <!-- 插入预订记录 -->
+    <insert id="insert" parameterType="com.meeting.booking.model.Booking" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO bookings (room_id, user_id, date, start_time, end_time, title, attendees, description, status, created_at, updated_at)
+        VALUES (#{roomId}, #{userId}, #{date}, #{startTime}, #{endTime}, #{title}, #{attendees}, #{description}, #{status}, NOW(), NOW())
+    </insert>
+
+    <!-- 更新预订记录 -->
+    <update id="update" parameterType="com.meeting.booking.model.Booking">
+        UPDATE bookings
+        <set>
+            <if test="roomId != null">room_id = #{roomId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="date != null">date = #{date},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="attendees != null">attendees = #{attendees},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除预订记录 -->
+    <delete id="deleteById">
+        DELETE FROM bookings WHERE id = #{id}
+    </delete>
+
+    <!-- 查询所有预订记录 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM bookings
+    </select>
+
+    <!-- 通过ID查询预订记录 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM bookings WHERE id = #{id}
+    </select>
+
+    <!-- 查询重叠的预订记录，被取消和被拒绝的预定记录不查询  -->
+    <select id="findOverlappingBookings" resultMap="BaseResultMap">
+        SELECT * FROM bookings 
+        WHERE room_id = #{roomId} 
+        AND date = #{date}
+        AND status != 'CANCELLED'
+        AND status != 'REJECTED'    
+        AND (
+            (start_time &lt; #{endTime} AND end_time &gt; #{startTime})
+            OR (start_time = #{startTime})
+            OR (end_time = #{endTime})
+        )
+    </select>
+
+    <!-- 查询指定会议室和日期的所有预订记录 -->
+    <select id="selectByRoomAndDate" resultMap="BaseResultMap">
+        SELECT * FROM bookings 
+        WHERE room_id = #{roomId} 
+        AND date = #{date}
+        AND status != 'CANCELLED'
+        ORDER BY start_time ASC
+    </select>
+
+    <!-- 分页查询预订记录 -->
+    <select id="selectBookingRecords" resultMap="BaseResultMap">
+        SELECT b.*, r.name as room_name, u.username as user_name
+        FROM bookings b
+        LEFT JOIN rooms r ON b.room_id = r.id
+        LEFT JOIN users u ON b.user_id = u.id
+        <where>
+            <if test="status != null">
+                AND b.status = #{status}
+            </if>
+            <if test="userId != null">
+                AND b.user_id = #{userId}
+            </if>
+        </where>
+        ORDER BY b.created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 获取预订记录总数 -->
+    <select id="countBookingRecords" resultType="int">
+        SELECT COUNT(*)
+        FROM bookings b
+        <where>
+            <if test="status != null">
+                AND b.status = #{status}
+            </if>
+            <if test="userId != null">
+                AND b.user_id = #{userId}
+            </if>
+        </where>
+    </select>
+</mapper> 

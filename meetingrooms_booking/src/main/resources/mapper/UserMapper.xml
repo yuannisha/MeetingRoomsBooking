@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.meeting.booking.dao.UserMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.meeting.booking.model.User">
+        <id column="id" property="id" />
+        <result column="phone" property="phone" />
+        <result column="password" property="password" />
+        <result column="username" property="username" />
+        <result column="status" property="status" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, phone, password, username, status, created_at, updated_at
+    </sql>
+
+    <!-- 通过ID查询用户 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM users
+        WHERE id = #{id}
+    </select>
+
+    <!-- 通过手机号查询用户 -->
+    <select id="selectByPhone" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM users
+        WHERE phone = #{phone}
+    </select>
+
+    <!-- 条件查询用户列表（分页） -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM users
+        <where>
+            <if test="phone != null">
+                phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+            <if test="username != null">
+                AND username LIKE CONCAT('%', #{username}, '%')
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 插入新用户 -->
+    <insert id="insert" parameterType="com.meeting.booking.model.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (phone, password, username, status, created_at, updated_at)
+        VALUES (#{phone}, #{password}, #{username}, #{status}, NOW(), NOW())
+    </insert>
+
+    <!-- 更新用户信息 -->
+    <update id="update" parameterType="com.meeting.booking.model.User">
+        UPDATE users
+        <set>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="username != null">username = #{username},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除用户 -->
+    <delete id="deleteById">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+    <!-- 获取总用户数 -->
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM users
+    </select>
+</mapper> 

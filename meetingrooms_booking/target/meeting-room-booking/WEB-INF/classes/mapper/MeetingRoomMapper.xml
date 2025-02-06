@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.meeting.booking.dao.MeetingRoomMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.meeting.booking.model.MeetingRoom">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="capacity" property="capacity" />
+        <result column="location" property="location" />
+        <result column="status" property="status" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <!-- 插入会议室 -->
+    <insert id="insert" parameterType="com.meeting.booking.model.MeetingRoom" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rooms (name, capacity, location, status, created_at, updated_at)
+        VALUES (#{name}, #{capacity}, #{location}, #{status}, NOW(), NOW())
+    </insert>
+
+    <!-- 更新会议室 -->
+    <update id="update" parameterType="com.meeting.booking.model.MeetingRoom">
+        UPDATE rooms
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="capacity != null">capacity = #{capacity},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="isFree != null">isFree = #{isFree},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除会议室 -->
+    <delete id="deleteById">
+        DELETE FROM rooms WHERE id = #{id}
+    </delete>
+
+    <!-- 查询所有会议室 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM rooms
+        <where>
+            <if test="name != null">
+                name LIKE CONCAT('%', #{name}, '%')
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 通过ID查询会议室 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM rooms WHERE id = #{id}
+    </select>
+</mapper> 

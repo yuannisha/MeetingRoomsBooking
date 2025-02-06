@@ -1,0 +1,131 @@
+-- 用户表
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    phone VARCHAR(20) NOT NULL UNIQUE COMMENT '手机号',
+    password VARCHAR(100) NOT NULL COMMENT '密码',
+    username VARCHAR(50) NOT NULL COMMENT '用户名',
+    status INT NOT NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- 角色表
+CREATE TABLE roles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE COMMENT '角色名称',
+    description VARCHAR(200) COMMENT '角色描述',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色表';
+
+-- 用户角色关联表
+CREATE TABLE user_roles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (role_id) REFERENCES roles(id),
+    UNIQUE KEY uk_user_role (user_id, role_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关联表';
+
+-- 权限表
+CREATE TABLE permissions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE COMMENT '权限名称',
+    description VARCHAR(200) COMMENT '权限描述',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权限表';
+
+-- 角色权限关联表
+CREATE TABLE role_permissions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    permission_id BIGINT NOT NULL COMMENT '权限ID',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    FOREIGN KEY (role_id) REFERENCES roles(id),
+    FOREIGN KEY (permission_id) REFERENCES permissions(id),
+    UNIQUE KEY uk_role_permission (role_id, permission_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色权限关联表';
+
+-- 会议室表
+CREATE TABLE rooms (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE COMMENT '会议室名称',
+    capacity INT NOT NULL COMMENT '容纳人数',
+    location VARCHAR(100) NOT NULL COMMENT '位置',
+    status INT NOT NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+    isFree INT NOT NULL DEFAULT 1 COMMENT '是否空闲：1-空闲，0-不空闲',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_name (name),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会议室表';
+
+-- 预定记录表
+CREATE TABLE bookings (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_id BIGINT NOT NULL COMMENT '会议室ID',
+    user_id BIGINT NOT NULL COMMENT '预定用户ID',
+    date DATE NOT NULL COMMENT '预定日期',
+    start_time INT NOT NULL COMMENT '开始时间',
+    end_time INT NOT NULL COMMENT '结束时间',
+    title VARCHAR(100) NOT NULL COMMENT '会议主题',
+    attendees TEXT NOT NULL COMMENT '参会人员',
+    description TEXT NOT NULL COMMENT '会议描述',
+    status enum ('PENDING','APPROVED','REJECTED','CANCELLED') NOT NULL DEFAULT 'PENDING' COMMENT '预定状态',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_room_date (room_id, date),
+    INDEX idx_user_date (user_id, date),
+    INDEX idx_status (status),
+    INDEX idx_date (date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='预定记录表';
+
+-- 插入初始角色
+INSERT INTO roles (name, description) VALUES
+('ROLE_ADMIN', '系统管理员'),
+('ROLE_USER', '普通用户');
+
+-- 插入初始权限
+INSERT INTO permissions (name, description) VALUES
+('USER_CREATE', '创建用户'),
+('USER_READ', '查看用户'),
+('USER_UPDATE', '更新用户'),
+('USER_DELETE', '删除用户'),
+('ROOM_CREATE', '创建会议室'),
+('ROOM_READ', '查看会议室'),
+('ROOM_UPDATE', '更新会议室'),
+('ROOM_DELETE', '删除会议室'),
+('BOOKING_CREATE', '创建预订'),
+('BOOKING_READ', '查看预订'),
+('BOOKING_UPDATE', '更新预订'),
+('BOOKING_DELETE', '删除预订');
+
+-- 为角色分配权限
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.name = 'ROLE_ADMIN';
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.name = 'ROLE_USER'
+AND p.name IN ('ROOM_READ', 'BOOKING_CREATE', 'BOOKING_READ', 'BOOKING_UPDATE', 'BOOKING_DELETE');
+
+-- 创建管理员用户（密码：admin123）
+INSERT INTO users (phone, password, name, email, status)
+VALUES ('13800138000', '$2a$10$rTxFfhJVrwHq6CSJ3LXfAOYz.DDxG7/mZhD8fF8EYhCmG6.P9Udji', '管理员', 'admin@example.com', 1);
+
+-- 为管理员分配角色
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM users u
+CROSS JOIN roles r
+WHERE u.phone = '13800138000'
+AND r.name = 'ROLE_ADMIN'; 

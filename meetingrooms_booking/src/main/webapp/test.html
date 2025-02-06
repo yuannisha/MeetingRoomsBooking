@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>接口测试页面</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body { padding: 20px; font-family: Arial, sans-serif; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        .result { margin-top: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>用户接口测试</h2>
+        
+        <div class="form-group">
+            <h3>用户注册</h3>
+            <label>手机号：</label>
+            <input type="text" id="registerPhone" value="13800138001">
+            <label>密码：</label>
+            <input type="password" id="registerPassword" value="123456">
+            <label>用户名：</label>
+            <input type="text" id="registerUsername" value="测试用户">
+            <button onclick="register()">注册</button>
+        </div>
+
+        <div class="form-group">
+            <h3>用户登录</h3>
+            <label>手机号：</label>
+            <input type="text" id="loginPhone" value="13800138001">
+            <label>密码：</label>
+            <input type="password" id="loginPassword" value="123456">
+            <button onclick="login()">登录</button>
+        </div>
+
+        <div class="form-group">
+            <h3>获取用户列表</h3>
+            <button onclick="getUserList()">获取列表</button>
+        </div>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:8080/api';
+        
+        function showResult(data) {
+            document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+
+        async function register() {
+            try {
+                const response = await axios.post(`${baseUrl}/users/register`, {
+                    phone: document.getElementById('registerPhone').value,
+                    password: document.getElementById('registerPassword').value,
+                    username: document.getElementById('registerUsername').value
+                });
+                showResult(response.data);
+            } catch (error) {
+                showResult(error.response?.data || error.message);
+            }
+        }
+
+        async function login() {
+            try {
+                const response = await axios.post(`${baseUrl}/users/login`, {
+                    phone: document.getElementById('loginPhone').value,
+                    password: document.getElementById('loginPassword').value
+                });
+                showResult(response.data);
+            } catch (error) {
+                showResult(error.response?.data || error.message);
+            }
+        }
+
+        async function getUserList() {
+            try {
+                const response = await axios.get(`${baseUrl}/users?page=1&size=10`);
+                showResult(response.data);
+            } catch (error) {
+                showResult(error.response?.data || error.message);
+            }
+        }
+    </script>
+</body>
+</html> 
